@@ -21,7 +21,15 @@ local Webhook_types = {
             local username = msg.from.name .. ' @ ' .. network.displayname
             local content = msg.text
 
-            local httpc = http.new()
+            local httpc = http.new()            
+            local avatar_url
+
+            if msg.from.picture and #msg.from.picture > 0 then
+              avatar_url = msg.from.picture
+            else
+              avatar_url = 'static/img/networks/' .. network.displayname .. '.png'
+            end
+
             httpc:request_uri(hook.url, {
               method = 'POST',
               headers = {
@@ -30,7 +38,7 @@ local Webhook_types = {
               body = to_json({
                 content = content,
                 username = username,
-                avatar_url = msg.from.picture,
+#                avatar_url = avatar_url,
               }),
             })
 
