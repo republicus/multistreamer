@@ -65,7 +65,7 @@ M.icon =
   '></svg>'
 M.icon_css = 'background-color: #6441a5;'
 
-local api_url = 'https://api.twitch.tv/kraken'
+local api_url = 'https://api.twitch.tv/helix'
 local twitch_config = config.networks.twitch
 
 local function http_error_handler(res)
@@ -101,7 +101,7 @@ local function refresh_access_token(refresh_token, access_token, expires_in, exp
     ngx_log(ngx_debug,body)
 
     local httpc = http.new(http_error_handler,config.networks.twitch.debug)
-    local refresh_res, refresh_err = httpc:post('https://api.twitch.tv/kraken/oauth2/token',
+    local refresh_res, refresh_err = httpc:post('https://id.twitch.tv/oauth2/token',
       nil,
       {
         ['Content-Type'] = 'application/x-www-form-urlencoded',
@@ -148,7 +148,7 @@ local function twitch_api_client(access_token)
       ['Accept'] = 'application/vnd.twitchtv.v5+json',
     }
     if access_token then
-      req_headers['Authorization'] = 'OAuth ' .. access_token
+      req_headers['Bearer'] = 'OAuth ' .. access_token
     end
     if headers then
       for k,v in pairs(headers) do
@@ -224,15 +224,19 @@ end
 
 
 function M.get_oauth_url(user, stream_id)
-  return format('%s/oauth2/authorize?',api_url)..
-         encode_query_string({
-           response_type = 'code',
-           force_verify = 'true',
-           redirect_uri = M.redirect_uri,
-           client_id = twitch_config.client_id,
-           state = encode_base64(encode_with_secret({ id = user.id, stream_id = stream_id })),
-           scope = 'user_read channel_read channel_editor channel_stream chat:edit chat:read channel:moderate',
-         })
+  -- Ensure you're using the Helix API base URL
+  local helix_api_url = 'https://id.twitch.tv/oauth2'
+
+  -- Construct the URL with query parameters
+  local oauth_url = helix_api_url .. '/authorize?' .. encode_query_string({
+    client_id = twitch_config.client_id,
+    redirect_uri = M.redirect_uri,
+    response_type = 'code',
+    scope = 'user:read channel:read:subscriptions channel:manage:redemptions chat:edit chat:read moderation:read moderation:read',
+    state = encode_base64(encode_with_secret({ id = user.id, stream_id = stream_id })),
+  })
+
+  return oauth_url
 end
 
 function M.register_oauth(params)

@@ -27,7 +27,7 @@ local Webhook_types = {
             if msg.from.picture and #msg.from.picture > 0 then
               avatar_url = msg.from.picture
             else
-              avatar_url = 'static/img/networks/' .. network.displayname .. '.png'
+              avatar_url = config.public_http_url .. config.http_prefix .. '/static/img/networks/' .. network.displayname .. '.png'
             end
 
             httpc:request_uri(hook.url, {
