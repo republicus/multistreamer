@@ -375,11 +375,12 @@ function M.metadata_form(account, stream)
 
   local events = refresh_events(access_token)
 
-  for _,v in ipairs(events) do
-    insert(form[8].options, {
-      label = v.title .. ' (' .. v.start .. ')',
-      value = v.id,
-    })
+  for _, v in ipairs(events) do
+      local eventLabel = v.title .. ' (' .. (v.start or "N/A") .. ')'
+      insert(form[8].options, {
+          label = eventLabel,
+          value = v.id,
+      })
   end
 
   for _,v in pairs(form) do
