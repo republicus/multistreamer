@@ -148,7 +148,7 @@ local function twitch_api_client(access_token)
       ['Accept'] = 'application/vnd.twitchtv.v5+json',
     }
     if access_token then
-      req_headers['Bearer'] = 'OAuth ' .. access_token
+      req_headers['Authorization'] = 'Bearer ' .. access_token
     end
     if headers then
       for k,v in pairs(headers) do
@@ -228,11 +228,12 @@ function M.get_oauth_url(user, stream_id)
   local helix_api_url = 'https://id.twitch.tv/oauth2'
 
   -- Construct the URL with query parameters
+  -- /authorize or /validate ?? https://dev.twitch.tv/docs/authentication/validate-tokens
   local oauth_url = helix_api_url .. '/authorize?' .. encode_query_string({
     client_id = twitch_config.client_id,
     redirect_uri = M.redirect_uri,
-    response_type = 'code',
-    scope = 'user:read channel:read:subscriptions channel:manage:redemptions chat:edit chat:read moderation:read moderation:read',
+    response_type = 'token',
+    scope = 'user:read:email channel:read:subscriptions channel:manage:redemptions chat:edit chat:read moderation:read moderation:read',
     state = encode_base64(encode_with_secret({ id = user.id, stream_id = stream_id })),
   })
 
@@ -247,7 +248,10 @@ function M.register_oauth(params)
     return false, nil, 'Twitch Error: ' .. params.error
   end
 
-  local user, _ = decode_with_secret(decode_base64(params.state))
+  -- URL decoding function to convert %3D back to "=" before further processing
+  -- "fixes" error: twitch.lua:250: string argument only
+  local url_decoded_state = ngx.unescape_uri(params.state)
+  local user, _ = decode_with_secret(decode_base64(url_decoded_state))
 
   if not user then
     return false, nil, 'Error: User not found'

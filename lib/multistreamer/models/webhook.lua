@@ -38,7 +38,7 @@ local Webhook_types = {
               body = to_json({
                 content = content,
                 username = username,
-#                avatar_url = avatar_url,
+                avatar_url = avatar_url,
               }),
             })
 
